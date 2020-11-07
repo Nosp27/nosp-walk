@@ -7,10 +7,8 @@ from flask import make_response
 from werkzeug import exceptions
 import waitress
 
+app = flask.Flask(__name__)
 
-if __name__ == "__main__":
-    app = flask.Flask(__name__)
-    waitress.serve(app)
 
 def query(sql, *args):
     with psycopg2.connect("dbname=nosp_walk user=postgres") as conn:
@@ -96,3 +94,7 @@ def walk(request: flask.Request):
     )
 
     return {"status": "fine"}
+
+
+if __name__ == "__main__":
+    waitress.serve(app)

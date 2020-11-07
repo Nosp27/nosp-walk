@@ -28,22 +28,7 @@
 
             <androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent"
                                                                android:layout_height="wrap_content"
-                                                               >
-                <RadioGroup android:layout_width="wrap_content" android:layout_height="match_parent"
-                            android:orientation="horizontal"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            android:id="@+id/rg_walker"
-                            >
-                    <RadioButton android:layout_width="wrap_content" android:layout_height="wrap_content"
-                                 android:text="Паша"
-                                 android:layout_marginEnd="200dp"
-                                 android:id="@+id/rb_pasha"/>
-                    <RadioButton android:layout_width="wrap_content" android:layout_height="wrap_content"
-                                 android:text="Миша"
-                                 android:id="@+id/rb_misha"/>
-                </RadioGroup>
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                                                               />
 
 
             <com.google.android.material.textfield.TextInputLayout
@@ -58,7 +43,7 @@
                         android:imeActionId="6"
                         android:imeActionLabel="@string/action_sign_in_short"
                         android:imeOptions="actionUnspecified"
-                        android:inputType="textPassword"
+                        android:inputType="numberPassword"
                         android:maxLines="1"
                         android:singleLine="true"/>
 

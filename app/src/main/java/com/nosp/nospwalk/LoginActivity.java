@@ -12,12 +12,13 @@ import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
-import com.nosp.nospwalk.connectors.RESTConnector;
-import com.nosp.nospwalk.connectors.RESTConnectorImpl;
+import com.nosp.nospwalk.connectors.HttpBuilder;
 import org.json.JSONException;
 import org.json.JSONTokener;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A login screen that offers login via email/password.
@@ -76,10 +77,9 @@ public class LoginActivity extends AppCompatActivity {
         // Reset errors.
         mPasswordView.setError(null);
 
-        String person = findViewById(R.id.rb_pasha).isSelected() ? "P" : "M";
         String password = mPasswordView.getText().toString();
         showProgress(true);
-        mAuthTask = new UserLoginTask(person, password);
+        mAuthTask = new UserLoginTask(password);
         mAuthTask.execute();
     }
 
@@ -125,11 +125,9 @@ public class LoginActivity extends AppCompatActivity {
      */
     public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
 
-        private final String mPerson;
         private final String mPassword;
 
-        UserLoginTask(String person, String password) {
-            mPerson = person;
+        UserLoginTask(String password) {
             mPassword = password;
         }
 
@@ -137,8 +135,15 @@ public class LoginActivity extends AppCompatActivity {
         protected Boolean doInBackground(Void... params) {
             // TODO: attempt authentication against a network service.
             try {
-                RESTConnector conn = RESTConnectorImpl.create("nosp.top/walks");
-                JSONTokener tok = conn.post(mPerson, mPassword);
+                Map<String, String> data = new HashMap<>();
+                data.put("key", mPassword);
+                JSONTokener tok = new HttpBuilder()
+                        .url("nosp.top/walks")
+                        .post()
+                        .jsonData(data)
+                        .request()
+                        .raiseForStatus()
+                        .json();
                 return (boolean)tok.nextValue();
             } catch (IOException | JSONException | ClassCastException e) {
                 return false;
