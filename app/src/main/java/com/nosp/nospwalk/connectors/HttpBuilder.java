@@ -67,7 +67,9 @@ public class HttpBuilder {
         try {
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod(method);
-            connection.getHeaderFields().putAll(headers);
+            for (Map.Entry<String, List<String>> headerEntry : headers.entrySet())
+                for (String value : headerEntry.getValue())
+                    connection.setRequestProperty(headerEntry.getKey(), value);
             IOUtils.write(data, connection.getOutputStream(), StandardCharsets.UTF_8);
 
             int responseCode = connection.getResponseCode();
@@ -97,7 +99,7 @@ public class HttpBuilder {
             return this;
         }
 
-        public JSONTokener json(){
+        public JSONTokener json() {
             return new JSONTokener(data);
         }
     }
