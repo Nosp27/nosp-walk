@@ -1,6 +1,7 @@
 import json
 
 import flask
+from flask import request
 from datetime import datetime
 import psycopg2
 from flask import make_response
@@ -20,41 +21,30 @@ def query(sql, *args):
 
 @app.route("/")
 def main_page():
-    return {"status": "fine"}
+    return {"page": "main"}
 
 
-@app.route("/sign_in")
-def sign_in(request: flask.Request):
-    if request.method != "POST":
-        raise exceptions.MethodNotAllowed()
-
+@app.route("/sign_in", methods=["POST"])
+def sign_in():
     json_data = json.loads(request.data)
     key_hash = json_data["key"]
-    user = json_data["user"]
-    granted = (
-        len(
-            query(
-                f"""
-    select * from users
-    where key_hash = {key_hash}
-    """
-            )
-        )
-        == 1
-    )
-    if not granted:
+    try:
+        user = query(
+                    f"select _id from users where key_hash = '{key_hash}'",
+        )[0][0]
+    except Exception as e:
+        raise exceptions.Forbidden(e)
+
+    if not user:
         raise exceptions.Forbidden()
 
     resp = make_response({"access": "granted"})
-    resp.set_cookie("user", user)
+    resp.set_cookie("user", str(user))
     return resp
 
 
 @app.route("/history")
-def get_history(request: flask.Request):
-    if request.method != "GET":
-        raise exceptions.MethodNotAllowed()
-
+def get_history():
     req_data = request.args
     from_date, to_date = (req_data["from"], req_data["to"])
     walks = query(
@@ -72,11 +62,8 @@ def get_history(request: flask.Request):
     return walks
 
 
-@app.route("/walk")
-def walk(request: flask.Request):
-    if request.method != "POST":
-        raise exceptions.MethodNotAllowed()
-
+@app.route("/walk", methods=["POST"])
+def walk():
     json_data = json.loads(request.data)
 
     walk_timestamp = json_data["timestamp"]
