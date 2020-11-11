@@ -43,6 +43,27 @@ def sign_in():
     return resp
 
 
+@app.route("/turn")
+def turn():
+    user = request.cookies.get("user")
+    if not user:
+        print("no user")
+        return {"error": "cannot resolve user"}, 400
+    walking_user_id = query(
+    """
+    select
+        user_id,
+        count(*) as walk_count
+    from walks
+    group by user_id
+    order by walk_count
+    """)[0][0]
+
+    if str(walking_user_id) == user:
+        return {"turn": "you"}
+    return {"turn": "other"}
+
+
 @app.route("/history")
 def get_history():
     req_data = request.args
@@ -81,4 +102,4 @@ def walk():
         walker,
     )
 
-    return {"status": "fine"}
+    return {"status": "walk_registered"}

@@ -53,35 +53,10 @@ public class WalkerPageActivity extends AppCompatActivity {
     }
 
     void checkMode(){
-        setWaitingMode();
+        StateMachine.WAIT_MODE.apply(this);
         mStatusLoadTask.execute();
     }
 
-    private void setNotYourTurnMode() {
-        mWalkButton.setEnabled(true);
-        mTurnNotice.setText(R.string.not_your_turn);
-        mWalkButton.setText(R.string.walk_anyway);
-        mAskMateButton.setVisibility(View.INVISIBLE);
-        mPaws1.setVisibility(View.GONE);
-        mPaws2.setVisibility(View.VISIBLE);
-        mWalkButton.setBackground(mButtonNotYourTurn);
-    }
-
-    private void setYourTurnMode() {
-        mWalkButton.setEnabled(true);
-        mTurnNotice.setText(R.string.your_turn);
-        mWalkButton.setText(R.string.walk);
-        mAskMateButton.setVisibility(View.VISIBLE);
-        mPaws1.setVisibility(View.VISIBLE);
-        mPaws2.setVisibility(View.GONE);
-        mWalkButton.setBackground(mButtonNotYourTurn);
-    }
-
-    private void setWaitingMode() {
-        mTurnNotice.setText(R.string.loading);
-        mWalkButton.setEnabled(false);
-        mAskMateButton.setVisibility(View.INVISIBLE);
-    }
 
     @Override
     protected void onDestroy() {
@@ -105,7 +80,7 @@ public class WalkerPageActivity extends AppCompatActivity {
                             .request()
                             .raiseForStatus();
                     JSONObject respJson = new JSONObject(resp.json());
-                    if (respJson.getBoolean("my_turn"))
+                    if (respJson.getString("turn").equals("you"))
                         status = MY_TURN;
                     else status = NOT_MY_TURN;
                 } catch (IOException | JSONException e) {
@@ -127,14 +102,80 @@ public class WalkerPageActivity extends AppCompatActivity {
         protected void onProgressUpdate(Integer... statuses) {
             Integer status = statuses[0];
             if (status.equals(ERROR)){
-                mWalkButton.setEnabled(false);
-                mTurnNotice.setText(R.string.internal_error);
+                StateMachine.ERROR.apply(WalkerPageActivity.this);
             }
             else if (status.equals(MY_TURN)){
-                WalkerPageActivity.this.setYourTurnMode();
+                StateMachine.YOUR_TURN.apply(WalkerPageActivity.this);
             } else {
-                WalkerPageActivity.this.setNotYourTurnMode();
+                StateMachine.NOT_YOUR_TURN.apply(WalkerPageActivity.this);
             }
         }
+    }
+
+    enum StateMachine {
+        NOT_YOUR_TURN {
+            @Override
+            protected void applyState(WalkerPageActivity a){
+                a.mWalkButton.setVisibility(View.VISIBLE);
+                a.mTurnNotice.setVisibility(View.VISIBLE);
+                a.mPaws2.setVisibility(View.VISIBLE);
+
+                a.mPaws1.setVisibility(View.GONE);
+
+                a.mTurnNotice.setText(R.string.not_your_turn);
+                a.mWalkButton.setText(R.string.walk_anyway);
+                a.mWalkButton.setBackground(a.mButtonNotYourTurn);
+            }
+        },
+        YOUR_TURN{
+            @Override
+            protected void applyState(WalkerPageActivity a){
+                a.mWalkButton.setVisibility(View.VISIBLE);
+                a.mTurnNotice.setVisibility(View.VISIBLE);
+                a.mAskMateButton.setVisibility(View.VISIBLE);
+                a.mPaws1.setVisibility(View.VISIBLE);
+
+                a.mPaws2.setVisibility(View.GONE);
+
+                a.mTurnNotice.setText(R.string.your_turn);
+                a.mWalkButton.setText(R.string.walk);
+                a.mWalkButton.setBackground(a.mButtonNotYourTurn);
+            }
+        },
+        WAIT_MODE {
+            @Override
+            protected void applyState(WalkerPageActivity a){
+                a.mWalkButton.setVisibility(View.VISIBLE);
+                a.mTurnNotice.setVisibility(View.VISIBLE);
+
+                a.mTurnNotice.setText(R.string.loading);
+                a.mWalkButton.setEnabled(false);
+            }
+        },
+        ERROR {
+            @Override
+            protected void applyState(WalkerPageActivity a) {
+                a.mTurnNotice.setVisibility(View.VISIBLE);
+
+                a.mTurnNotice.setText(R.string.internal_error);
+            }
+        };
+
+        public final void apply(WalkerPageActivity a){
+            reset(a);
+            applyState(a);
+        }
+
+        private void reset(WalkerPageActivity a){
+            a.mWalkButton.setVisibility(View.INVISIBLE);
+            a.mAskMateButton.setVisibility(View.INVISIBLE);
+            a.mTurnNotice.setVisibility(View.INVISIBLE);
+            a.mPaws1.setVisibility(View.INVISIBLE);
+            a.mPaws2.setVisibility(View.INVISIBLE);
+            a.mWalkButton.setEnabled(true);
+            a.mWalkButton.setBackground(a.mButtonYourTurn);
+        }
+
+        protected abstract void applyState(WalkerPageActivity a);
     }
 }

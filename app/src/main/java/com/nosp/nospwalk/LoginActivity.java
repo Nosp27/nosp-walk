@@ -1,5 +1,6 @@
 package com.nosp.nospwalk;
 
+import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -17,7 +18,6 @@ import com.nosp.nospwalk.connectors.HttpBuilder;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -34,6 +34,7 @@ public class LoginActivity extends AppCompatActivity {
     private UserLoginTask mAuthTask = null;
 
     // UI references.
+    private Button mSignInButton;
     private EditText mPasswordView;
 
     @Override
@@ -53,8 +54,8 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        Button mEmailSignInButton = (Button) findViewById(R.id.login_button);
-        mEmailSignInButton.setOnClickListener(new OnClickListener() {
+        mSignInButton = (Button) findViewById(R.id.login_button);
+        mSignInButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
                 attemptLogin();
@@ -76,6 +77,7 @@ public class LoginActivity extends AppCompatActivity {
         // Reset errors.
         mPasswordView.setError(null);
 
+        ObjectAnimator.ofFloat(mSignInButton, "alpha", 1,0,1).setDuration(500).start();
         String password = mPasswordView.getText().toString();
         mAuthTask = new UserLoginTask(password);
         mAuthTask.execute();
@@ -114,12 +116,10 @@ public class LoginActivity extends AppCompatActivity {
                 if (resp.code == 200) {
                     Log.d("LOGIN_ASYNC_TASK", "FINE, 200");
                     return LOGGED_IN;
-                }
-                else if (resp.code == 403) {
+                } else if (resp.code == 403) {
                     Log.d("LOGIN_ASYNC_TASK", "WRONG CODE");
                     return WRONG_CODE;
-                }
-                else return ERROR;
+                } else return ERROR;
             } catch (IOException | ClassCastException e) {
                 Log.e("LOGIN_ASYNC_TASK", "Error", e);
                 return ERROR;
@@ -133,7 +133,7 @@ public class LoginActivity extends AppCompatActivity {
             if (status.equals(LOGGED_IN)) {
                 Intent intent = new Intent(LoginActivity.this, WalkerPageActivity.class);
                 startActivity(intent);
-            } else if (status.equals(WRONG_CODE)){
+            } else if (status.equals(WRONG_CODE)) {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
                 mPasswordView.requestFocus();
             } else {

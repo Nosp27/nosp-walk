@@ -20,6 +20,11 @@ public class HttpBuilder {
     private String method = "GET";
     private Map<String, List<String>> headers = new HashMap<>();
 
+    public HttpBuilder() {
+        if(CookieHandler.getDefault() == null)
+            CookieHandler.setDefault(new CookieManager());
+    }
+
     public HttpBuilder url(String link) {
         try {
             url = new URL(link);
