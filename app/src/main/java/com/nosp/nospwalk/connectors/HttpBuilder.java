@@ -1,5 +1,6 @@
 package com.nosp.nospwalk.connectors;
 
+import android.util.Log;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -17,7 +18,7 @@ public class HttpBuilder {
     private URL url;
     private String data = "";
     private String method = "GET";
-    private Map<String, List<String>> headers;
+    private Map<String, List<String>> headers = new HashMap<>();
 
     public HttpBuilder url(String link) {
         try {
@@ -66,15 +67,24 @@ public class HttpBuilder {
     public Response request() throws IOException {
         try {
             connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(5000);
             connection.setRequestMethod(method);
             for (Map.Entry<String, List<String>> headerEntry : headers.entrySet())
                 for (String value : headerEntry.getValue())
                     connection.setRequestProperty(headerEntry.getKey(), value);
-            IOUtils.write(data, connection.getOutputStream(), StandardCharsets.UTF_8);
+            if (method.equals("POST"))
+                IOUtils.write(data, connection.getOutputStream(), StandardCharsets.UTF_8);
 
             int responseCode = connection.getResponseCode();
-            String data = IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
-            return new Response(responseCode, connection.getResponseMessage(), data);
+            String data;
+            if (responseCode == 200)
+                data = IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
+            else
+                data = connection.getResponseMessage();
+            return new Response(responseCode, data);
+        } catch (Exception e) {
+            Log.e("HTTP_BUILDER", "ERROR", e);
+            throw e;
         } finally {
             if (connection != null)
                 connection.disconnect();
@@ -84,17 +94,15 @@ public class HttpBuilder {
     public static class Response {
         public int code;
         public String data;
-        public String responseMessage;
 
-        private Response(int responseCode, String responseMessage, String data) {
+        private Response(int responseCode, String data) {
             code = responseCode;
             this.data = data;
-            this.responseMessage = responseMessage;
         }
 
         public Response raiseForStatus() throws IOException {
             if (code != 200) {
-                throw new IOException(responseMessage);
+                throw new IOException(data);
             }
             return this;
         }

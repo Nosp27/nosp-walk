@@ -3,6 +3,7 @@ package com.nosp.nospwalk;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -15,6 +16,11 @@ import com.nosp.nospwalk.connectors.Config;
 import com.nosp.nospwalk.connectors.HttpBuilder;
 
 import java.io.IOException;
+import java.math.BigInteger;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -94,18 +100,28 @@ public class LoginActivity extends AppCompatActivity {
         protected Integer doInBackground(Void... params) {
             try {
                 Map<String, String> data = new HashMap<>();
-                data.put("key", mPassword);
+                try {
+                    byte[] hash = MessageDigest.getInstance("MD5").digest(mPassword.getBytes(StandardCharsets.UTF_8));
+                    data.put("key", new BigInteger(1, hash).toString(16));
+                } catch (NoSuchAlgorithmException e) {
+                    throw new RuntimeException(e);
+                }
                 HttpBuilder.Response resp = new HttpBuilder()
                         .url(Config.LOGIN)
                         .post()
                         .jsonData(data)
                         .request();
-                if (resp.code == 200)
+                if (resp.code == 200) {
+                    Log.d("LOGIN_ASYNC_TASK", "FINE, 200");
                     return LOGGED_IN;
-                else if (resp.code == 403)
+                }
+                else if (resp.code == 403) {
+                    Log.d("LOGIN_ASYNC_TASK", "WRONG CODE");
                     return WRONG_CODE;
+                }
                 else return ERROR;
             } catch (IOException | ClassCastException e) {
+                Log.e("LOGIN_ASYNC_TASK", "Error", e);
                 return ERROR;
             }
         }
